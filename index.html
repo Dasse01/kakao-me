@@ -39,6 +39,10 @@
   .eye svg{width:22px;height:22px;display:block}
   .eye .off{display:none}
   .eye.on .off{display:block}.eye.on .open{display:none}
+  .tabs{display:flex;gap:6px;margin-bottom:10px}
+  .tabs button.on{background:var(--pri);color:var(--prtx);font-weight:700}
+  .fld{margin-bottom:8px}
+  [hidden]{display:none!important}
   ol{font-size:13px;color:var(--sub);padding-left:18px;line-height:1.6}
 </style>
 </head>
@@ -66,8 +70,16 @@
   </div>
 
   <div class="card">
-    <label for="msg">보낼 내용</label>
+    <div class="tabs"><button type="button" id="tabText" class="on">텍스트</button><button type="button" id="tabCard">카드</button></div>
+    <label for="msg" id="msgLabel">보낼 내용</label>
     <textarea id="msg" placeholder="보낼 문구를 입력하세요"></textarea>
+    <div id="cardPane" hidden>
+      <div class="fld"><input id="cTitle" maxlength="50" placeholder="제목 (예: 작업 완료 · 107지표 보고서)"></div>
+      <div class="fld"><textarea id="cDesc" maxlength="100" style="min-height:70px" placeholder="설명 (100자 이내)"></textarea></div>
+      <div class="fld"><input id="cLink" placeholder="보고서 링크 (https://...)"></div>
+      <div class="fld"><input id="cBtn" placeholder="버튼 문구 (비우면 '보고서 보기')"></div>
+      <div class="fld"><input id="cImg" placeholder="이미지 주소 (비우면 기본 이미지)"></div>
+    </div>
     <div class="row">
       <button id="send" class="pri" disabled>나에게 보내기</button>
       <button id="test" disabled>테스트 문구 보내기</button>
@@ -172,13 +184,13 @@ document.getElementById('eye').onclick=function(){var k=document.getElementById(
     });
   }
 
-  function send(text){
-    if(!text.trim()){ setMsg($('sendMsg'),'보낼 내용을 입력하세요.','err'); return; }
+  function send(text, tplOverride){
+    if(!tplOverride && !text.trim()){ setMsg($('sendMsg'),'보낼 내용을 입력하세요.','err'); return; }
     var btns=[$('send'),$('test')]; btns.forEach(function(b){b.disabled=true});
     setMsg($('sendMsg'),'전송 중...');
     ensureToken().then(function(ok){
       if(!ok){ setLoggedIn(false); throw new Error('로그인이 만료되었습니다. 다시 로그인하세요.'); }
-      return Kakao.API.request({
+      return Kakao.API.request(tplOverride ? {url:'/v2/api/talk/memo/default/send', data:{template_object: tplOverride}} : {
         url:'/v2/api/talk/memo/default/send',
         data:{ template_object:{
           object_type:'text',
@@ -218,7 +230,31 @@ document.getElementById('eye').onclick=function(){var k=document.getElementById(
     setMsg($('authMsg'),'로그아웃했습니다. (카카오 계정 자체는 로그아웃되지 않습니다)');
   };
 
-  $('send').onclick = function(){ send($('msg').value); };
+  var mode = 'text';
+  function setMode(m){
+    mode = m;
+    $('tabText').classList.toggle('on', m==='text');
+    $('tabCard').classList.toggle('on', m==='card');
+    $('msg').hidden = (m==='card');
+    $('cardPane').hidden = (m!=='card');
+    $('msgLabel').textContent = (m==='card') ? '작업 완료 카드' : '보낼 내용';
+  }
+  function buildCard(){
+    var t = ($('cTitle').value||'').trim();
+    if(!t){ setMsg($('sendMsg'),'제목을 입력하세요.','err'); return null; }
+    var link = ($('cLink').value||'').trim() || location.origin;
+    var img = ($('cImg').value||'').trim() || (location.origin + '/og.png');
+    return {object_type:'feed',
+      content:{title:t.slice(0,50), description:($('cDesc').value||'').trim().slice(0,100),
+        image_url:img, image_width:1200, image_height:630, link:{web_url:link, mobile_web_url:link}},
+      buttons:[{title:($('cBtn').value||'').trim() || '보고서 보기', link:{web_url:link, mobile_web_url:link}}]};
+  }
+  $('tabText').onclick = function(){ setMode('text'); };
+  $('tabCard').onclick = function(){ setMode('card'); };
+  $('send').onclick = function(){
+    if(mode==='card'){ var t = buildCard(); if(t) send('', t); }
+    else send($('msg').value);
+  };
   $('test').onclick = function(){ send('테스트 메시지 · '+new Date().toLocaleString('ko-KR')); };
 
   if(typeof Kakao==='undefined'){
