@@ -98,7 +98,7 @@ async function complete(prompt) {
     const r = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
-      body: JSON.stringify({ model: process.env.LLM_MODEL || 'claude-sonnet-5-5', max_tokens: 4000, messages: [{ role: 'user', content: prompt }] }),
+      body: JSON.stringify({ model: process.env.LLM_MODEL || 'claude-sonnet-5-5', max_tokens: 3500, messages: [{ role: 'user', content: prompt }] }),
     });
     const j = await r.json();
     if (!j.content || !j.content[0]) throw new Error('Anthropic 응답 오류: ' + JSON.stringify(j).slice(0, 300));
@@ -192,7 +192,7 @@ async function build({ force = false, hours = 36 } = {}) {
       if (a.published && now - a.published > hours * 3600e3) continue;
       arts.push(a);
     } catch (e) { /* 개별 기사 실패는 건너뜀 */ }
-    if (arts.length >= 10) break;
+    if (arts.length >= 7) break;
   }
   if (!arts.length) return null;
 
@@ -201,11 +201,11 @@ async function build({ force = false, hours = 36 } = {}) {
   let items = [];
   if (free.length) {
     const prompt = `당신은 대입 입시 전문 에디터입니다. 아래 기사들을 읽고 JSON 으로만 답하세요.
-형식: {"items":[{"id":숫자,"bullets":["핵심1","핵심2","핵심3"],"summary":"4~6문장 요약"}],"top3":["오늘의 핵심1(40자 이내)","핵심2","핵심3"]}
-규칙: 기사에 없는 내용은 쓰지 말고, 수치(인원·비율·날짜)는 정확히 옮기세요. 한국어.
+형식: {"items":[{"id":숫자,"bullets":["핵심1","핵심2","핵심3"],"summary":"3~4문장 요약"}],"top3":["오늘의 핵심1(40자 이내)","핵심2","핵심3"]}
+규칙: 기사에 없는 내용은 쓰지 말고, 수치(인원·비율·날짜)는 정확히 옮기세요. 한국어. 문자열 안에 큰따옴표(")와 줄바꿈을 쓰지 말고 작은따옴표나 괄호를 쓰세요. 순수 JSON 만 출력.
 
 ` + free.map((a) => `[id:${a.id}] ${a.title}\n${a.body.slice(0, 6000)}`).join('\n\n---\n\n');
-    const out = llm.parseJson(await llm.complete(prompt));
+    let out; for (let k = 0; k < 2; k++) { try { out = llm.parseJson(await llm.complete(prompt)); break; } catch (e) { if (k) throw e; } }
     items = free.map((a) => {
       const x = (out.items || []).find((i) => Number(i.id) === a.id) || {};
       return { id: a.id, url: a.url, title: a.title, bullets: x.bullets || [], summary: x.summary || '' };
