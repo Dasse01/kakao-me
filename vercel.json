@@ -1,0 +1,26 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron",
+      "schedule": "0 22 * * *"
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/api/cron",
+      "destination": "/api/index?r=cron"
+    },
+    {
+      "source": "/news/:date",
+      "destination": "/api/index?r=news&date=:date"
+    },
+    {
+      "source": "/api/auth/start",
+      "destination": "/api/index?r=start"
+    },
+    {
+      "source": "/api/auth/callback",
+      "destination": "/api/index?r=callback"
+    }
+  ]
+}

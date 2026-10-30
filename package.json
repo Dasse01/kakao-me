@@ -1,0 +1,1 @@
+{ "name": "kakao-me", "private": true, "engines": { "node": ">=18" } }
