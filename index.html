@@ -4,6 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>카카오톡 나에게 보내기</title>
+<meta name="description" content="입력한 문구를 내 카카오톡 나와의 채팅으로 보내는 도구">
+<meta property="og:type" content="website">
+<meta property="og:title" content="카카오톡 나에게 보내기">
+<meta property="og:description" content="입력한 문구를 내 카카오톡 나와의 채팅으로 보내는 도구">
+<meta property="og:image" content="https://kakao-me-tau.vercel.app/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://kakao-me-tau.vercel.app/og.png">
 <style>
   :root{--bg:#f5f6f8;--card:#fff;--tx:#1f2937;--sub:#6b7280;--line:#e5e7eb;--pri:#fee500;--prtx:#191600;--ok:#15803d;--err:#b91c1c}
   @media (prefers-color-scheme:dark){:root{--bg:#111827;--card:#1f2937;--tx:#f3f4f6;--sub:#9ca3af;--line:#374151;--ok:#4ade80;--err:#f87171}}
@@ -24,6 +33,12 @@
   .ok{color:var(--ok)}.err{color:var(--err)}
   .badge{font-size:12px;padding:2px 8px;border-radius:99px;background:var(--line)}
   details summary{cursor:pointer;font-size:13px;color:var(--sub)}
+  .keybox{position:relative}
+  .keybox input{padding-right:44px}
+  .eye{position:absolute;right:4px;top:50%;transform:translateY(-50%);padding:6px 8px;background:transparent;line-height:0;color:var(--sub)}
+  .eye svg{width:22px;height:22px;display:block}
+  .eye .off{display:none}
+  .eye.on .off{display:block}.eye.on .open{display:none}
   ol{font-size:13px;color:var(--sub);padding-left:18px;line-height:1.6}
 </style>
 </head>
@@ -34,7 +49,13 @@
 
   <div class="card">
     <label for="key">JavaScript 키</label>
-    <input id="key" type="text" placeholder="카카오 개발자 콘솔 > 앱 키 > JavaScript 키" autocomplete="off">
+    <div class="keybox">
+      <input id="key" type="password" placeholder="카카오 개발자 콘솔 > 앱 키 > JavaScript 키" autocomplete="off" spellcheck="false">
+      <button type="button" id="eye" class="eye" aria-label="키 보기/숨기기" title="키 보기/숨기기">
+        <svg class="open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+        <svg class="off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.9 17.9A10.9 10.9 0 0 1 12 19C5.5 19 2 12 2 12a18.5 18.5 0 0 1 5.1-5.9M9.9 5.1A10.4 10.4 0 0 1 12 5c6.5 0 10 7 10 7a18.6 18.6 0 0 1-2.2 3.2M1 1l22 22"/><path d="M14.1 14.1a3 3 0 1 1-4.2-4.2"/></svg>
+      </button>
+    </div>
     <div class="row">
       <button id="saveKey">키 저장</button>
       <button id="login" class="pri">카카오 로그인</button>
@@ -66,6 +87,9 @@
   </details>
 </div>
 
+<script>
+document.getElementById('eye').onclick=function(){var k=document.getElementById('key'),show=k.type==='password';k.type=show?'text':'password';this.classList.toggle('on',show);};
+</script>
 <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.4/kakao.min.js" crossorigin="anonymous"></script>
 <script>
 (function(){
