@@ -256,7 +256,16 @@ module.exports = async (req, res) => {
     await kakao.sendText(text, url);
     res.json({ ok: true, sent: true, text });
   } catch (e) {
-    res.status(500).json({ ok: false, error: String(e.message || e) });
+    const msg = String(e.message || e);
+    let alerted = false;
+    if (req.query.dry !== '1') {
+      try {
+        const short = msg.replace(/\s+/g, ' ').slice(0, 120);
+        await kakao.sendText('[입시뉴스 오류] 자동 발송 실패\n' + short + '\n수동 재실행: /api/cron?key=(CRON_SECRET)', kakao.origin());
+        alerted = true;
+      } catch (e2) {}
+    }
+    res.status(500).json({ ok: false, error: msg, alerted });
   }
 };
 module.exports.config = { maxDuration: 60 };
