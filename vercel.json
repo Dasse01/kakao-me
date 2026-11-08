@@ -19,6 +19,10 @@
       "destination": "/api/index?r=start"
     },
     {
+      "source": "/api/notify",
+      "destination": "/api/index?r=notify"
+    },
+    {
       "source": "/api/auth/callback",
       "destination": "/api/index?r=callback"
     }
