@@ -271,6 +271,26 @@ module.exports = async (req, res) => {
 module.exports.config = { maxDuration: 60 };
 
 };
+__defs['notify'] = function (module, exports, require) {
+// 상담 신청 등 외부 알림 → 카톡 나에게 보내기. 비밀 값은 Vercel 환경변수 NOTIFY_SECRET(코드에 넣지 않음).
+const kakao = require('kakao');
+module.exports = async (req, res) => {
+  const s = process.env.NOTIFY_SECRET;
+  const b = req.body && typeof req.body === 'object' ? req.body : {};
+  const k = String(req.headers['x-notify-key'] || b.key || '');
+  if (!s || req.method !== 'POST' || k !== s) return res.status(401).json({ error: 'unauthorized' });
+  const text = String(b.text || '').slice(0, 190);
+  if (!text) return res.status(400).json({ error: 'no text' });
+  const link = /^https:\/\//.test(String(b.link || '')) ? String(b.link) : kakao.origin();
+  try {
+    await kakao.sendText(text, link, String(b.button || '확인하기').slice(0, 14));
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: String(e.message || e).slice(0, 200) });
+  }
+};
+
+};
 __defs['news'] = function (module, exports, require) {
 const store = require('store');
 const esc = (s) => String(s || '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -330,7 +350,7 @@ module.exports = async (req, res) => {
 
 module.exports = async (req, res) => {
   const r = String(req.query.r || '');
-  if (!['cron', 'news', 'start', 'callback'].includes(r)) return res.status(404).send('not found');
+  if (!['cron', 'news', 'start', 'callback', 'notify'].includes(r)) return res.status(404).send('not found');
   return __req(r)(req, res);
 };
 module.exports.config = { maxDuration: 60 };
